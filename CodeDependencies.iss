@@ -716,6 +716,7 @@ begin
   end;
 end;
 
+
 const
   Dependency_JavaURL = 'https://java.com/%s/download/manual.jsp';
   Dependency_JavaVersionMarker = 'java version "';
@@ -851,17 +852,6 @@ Name: nl; MessagesFile: "compiler:Languages\Dutch.isl"
 Name: de; MessagesFile: "compiler:Languages\German.isl"
 
 [Files]
-#ifdef UseNetCoreCheck
-; download netcorecheck.exe: https://go.microsoft.com/fwlink/?linkid=2135256
-; download netcorecheck_x64.exe: https://go.microsoft.com/fwlink/?linkid=2135504
-Source: "netcorecheck.exe"; Flags: dontcopy noencryption
-Source: "netcorecheck_x64.exe"; Flags: dontcopy noencryption
-#endif
-
-#ifdef UseDirectX
-Source: "dxwebsetup.exe"; Flags: dontcopy noencryption
-#endif
-
 Source: "MyProg-x64.exe"; DestDir: "{app}"; DestName: "MyProg.exe"; Check: Dependency_IsX64; Flags: ignoreversion
 Source: "MyProg.exe"; DestDir: "{app}"; Check: not Dependency_IsX64; Flags: ignoreversion
 
@@ -875,9 +865,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"
 
 [Run]
 Filename: "{app}\MyProg.exe"; Description: "{cm:LaunchProgram,{#MyAppSetupName}}"; Flags: nowait postinstall skipifsilent
+#endif
 
 [Code]
-function InitializeSetup: Boolean;
+<event('InitializeSetup')>
+function Dependency_InitializeSetup: Boolean;
 begin
 #ifdef UseDotNet35
   Dependency_AddDotNet35;
@@ -899,30 +891,39 @@ begin
 #endif
 
 #ifdef UseNetCore31
+  #define UseNetCoreCheck
   Dependency_AddNetCore31;
 #endif
 #ifdef UseNetCore31Asp
+  #define UseNetCoreCheck
   Dependency_AddNetCore31Asp;
 #endif
 #ifdef UseNetCore31Desktop
+  #define UseNetCoreCheck
   Dependency_AddNetCore31Desktop;
 #endif
 #ifdef UseDotNet50
+  #define UseNetCoreCheck
   Dependency_AddDotNet50;
 #endif
 #ifdef UseDotNet50Asp
+  #define UseNetCoreCheck
   Dependency_AddDotNet50Asp;
 #endif
 #ifdef UseDotNet50Desktop
+  #define UseNetCoreCheck
   Dependency_AddDotNet50Desktop;
 #endif
 #ifdef UseDotNet60
+  #define UseNetCoreCheck
   Dependency_AddDotNet60;
 #endif
 #ifdef UseDotNet60Asp
+  #define UseNetCoreCheck
   Dependency_AddDotNet60Asp;
 #endif
 #ifdef UseDotNet60Desktop
+  #define UseNetCoreCheck
   Dependency_AddDotNet60Desktop;
 #endif
 
@@ -978,4 +979,22 @@ begin
   Result := True;
 end;
 
+[Files]
+#ifdef UseNetCoreCheck
+
+#define protected BaseCurrentFilePath ExtractFilePath(__PATHFILENAME__)
+#if BaseCurrentFilePath == ""
+#define protected CurrentFilePath ""
+#else
+#define protected CurrentFilePath ExtractFilePath(__PATHFILENAME__) + "\src\"
+#endif
+
+; download netcorecheck.exe: https://go.microsoft.com/fwlink/?linkid=2135256
+; download netcorecheck_x64.exe: https://go.microsoft.com/fwlink/?linkid=2135504
+Source: "{#CurrentFilePath}netcorecheck.exe"; Flags: dontcopy noencryption
+Source: "{#CurrentFilePath}netcorecheck_x64.exe"; Flags: dontcopy noencryption
+#endif
+
+#ifdef UseDirectX
+Source: "dxwebsetup.exe"; Flags: dontcopy noencryption
 #endif
