@@ -130,6 +130,17 @@ begin
   Dependency_List[DependencyCount] := Dependency;
 end;
 
+function Dependency_Execute(const Filename, Parameters: String; var ResultCode : Integer): Boolean;
+var
+  Handled: Boolean;
+begin
+  Handled := False;
+  #ifdef Dependency_CustomExecute
+  Result := {#Dependency_CustomExecute}(Filename, Parameters, ResultCode, Handled);
+  #endif
+  if not Handled then
+    Result := ShellExec('', Filename, Parameters, '', SW_SHOWNORMAL, ewWaitUntilTerminated, ResultCode);
+
 procedure Dependency_Add(const Filename, Parameters, Title, URL, Checksum: String; const ForceSuccess, RestartAfter: Boolean);
 begin
   Dependency_AddEx(Filename, Parameters, Title, URL, Checksum, ForceSuccess, RestartAfter, False);
@@ -187,6 +198,17 @@ begin
 
     if Result = '' then begin
       for DependencyIndex := 0 to DependencyCount - 1 do begin
+        Dependency_DownloadPage.SetText(Dependency_List[DependencyIndex].Title, '');
+        Dependency_DownloadPage.SetProgress(DependencyIndex + 1, DependencyCount + 1);
+
+        while True do begin
+          ResultCode := 0;
+          if Dependency_Execute(ExpandConstant('{tmp}{\}') + Dependency_List[DependencyIndex].Filename, Dependency_List[DependencyIndex].Parameters, ResultCode) then begin
+            if Dependency_List[DependencyIndex].RestartAfter then begin
+              if DependencyIndex = DependencyCount - 1 then begin
+                Dependency_NeedRestart := True;
+              end else begin
+              
         if not Dependency_List[DependencyIndex].ExternalInstall then begin
           Dependency_DownloadPage.SetText(Dependency_List[DependencyIndex].Title, '');
           Dependency_DownloadPage.SetProgress(DependencyIndex + 1, DependencyCount + 1);
